@@ -18,8 +18,7 @@ local deployment(namespace, accessKey, secretKey) = {
           storage: '931Gi',
         },
         hostPath: {
-          path: '/mnt/hdd/minio',
-          type: '',
+          path: '/mnt/hdd/cloud-data',
         },
         accessModes: [
           'ReadWriteOnce',
