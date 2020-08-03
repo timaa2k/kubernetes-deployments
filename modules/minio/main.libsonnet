@@ -1,6 +1,6 @@
 local name = 'minio';
 
-local deployment(namespace, accessKey, secretKey) = {
+local deployment(namespace, accessKey, secretKey, nodePort) = {
   apiVersion: 'v1',
   kind: 'List',
   items: [
@@ -224,6 +224,7 @@ local deployment(namespace, accessKey, secretKey) = {
             protocol: 'TCP',
             port: 9000,
             targetPort: 9000,
+            nodePort: nodePort,
           },
         ],
         selector: {

@@ -10,9 +10,10 @@ function(
     cloud.Deployment(
       namespace='cloud',
       serveUrl='zion:30001',
+      filestashNodePort=30001,
       accessKey=minioAccessKey,
       secretKey=minioSecretKey,
-      nodePort=30001,
+      minioNodePort=30000,
     ).items,
   ]),
 }

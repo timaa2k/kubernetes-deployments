@@ -4,9 +4,10 @@ local minio = import '../minio/main.libsonnet';
 local deployment(
   namespace,
   serveUrl,
+  filestashNodePort,
   accessKey,
   secretKey,
-  nodePort,
+  minioNodePort,
 ) = {
   apiVersion: 'v1',
   kind: 'List',
@@ -36,11 +37,12 @@ local deployment(
       namespace=namespace,
       accessKey=accessKey,
       secretKey=secretKey,
+      nodePort=minioNodePort,
     ).items,
     filestash.Deployment(
       namespace=namespace,
       serveUrl=serveUrl,
-      nodePort=nodePort,
+      nodePort=filestashNodePort,
     ).items,
   ]),
 };
