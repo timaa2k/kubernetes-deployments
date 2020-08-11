@@ -4,6 +4,6 @@
   List(items):: {
     apiVersion: 'v1',
     kind: 'List',
-    items: $.convertObjectToList(items),
+    items: if std.type(items) == "object" then $.convertObjectToList(items) else items,
   },
 }

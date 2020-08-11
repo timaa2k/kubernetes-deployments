@@ -1,37 +1,22 @@
+local kube = import "../lib/kube.libsonnet";
+local kutils = import "../utils/kube.libsonnet";
 local filestash = import '../filestash/main.libsonnet';
 local minio = import '../minio/main.libsonnet';
 
-local deployment(
+local cloud(
   namespace,
   serveUrl,
   filestashNodePort,
   accessKey,
   secretKey,
   minioNodePort,
-) = {
-  apiVersion: 'v1',
-  kind: 'List',
-  items: std.flattenArrays([
+) = kutils.List(
+  std.flattenArrays([
     [
-      {
-        apiVersion: 'storage.k8s.io/v1',
-        kind: 'StorageClass',
-        metadata: {
-          name: 'local-backup-hdd',
-        },
+      kube.StorageClass('local-backup-hdd') {
         provisioner: 'kubernetes.io/no-provisioner',
-        volumeBindingMode: 'WaitForFirstConsumer',
-      },
-      {
-        apiVersion: 'v1',
-        kind: 'Namespace',
-        metadata: {
-          name: namespace,
-          labels: {
-            name: namespace,
-          },
-        },
-      },
+      } + { volumeBindingMode: 'WaitForFirstConsumer' },
+      kube.Namespace(namespace) {},
     ],
     minio.Deployment(
       namespace=namespace,
@@ -45,8 +30,8 @@ local deployment(
       nodePort=filestashNodePort,
     ).items,
   ]),
-};
+);
 
 {
-  Deployment:: deployment,
+  Deployment:: cloud,
 }
