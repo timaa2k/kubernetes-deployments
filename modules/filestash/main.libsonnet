@@ -3,9 +3,10 @@ local kutils = import "../utils/kube.libsonnet";
 
 local filestash(namespace, serveUrl, nodePort) = kutils.List({
 
-  deployment: kube.Deployment('filestash') {
+  namespace:: {metadata+: {namespace: namespace}},
+
+  deployment: kube.Deployment('filestash') + $.namespace {
     local resource = self,
-    metadata+: { 'namespace': namespace },
     spec+: {
       template+: {
         spec+: {
@@ -23,9 +24,8 @@ local filestash(namespace, serveUrl, nodePort) = kutils.List({
               ports_+: { http: { containerPort: 80 } },
   }}}}}},
 
-  service: kube.Service('filestash') {
+  service: kube.Service('filestash') + $.namespace {
     local service = self,
-    metadata+: { 'namespace': namespace, },
     target_pod: $.deployment.spec.template,
     spec+: {
       type: 'NodePort',
