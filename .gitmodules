@@ -1,0 +1,3 @@
+[submodule "modules/lib"]
+	path = modules/lib
+	url = https://github.com/bitnami-labs/kube-libsonnet
