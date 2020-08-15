@@ -1,11 +1,16 @@
 local kube = import "../lib/kube.libsonnet";
-local kutils = import "../utils/kube.libsonnet";
+local list = import "../utils/kube.libsonnet";
 
-local minio(namespace, accessKey, secretKey, nodePort) = kutils.List({
+local name = 'minio';
 
-  namespace:: {metadata+: {namespace: namespace}},
+{
+  accessKey:: 'AKIAIOSFODNN7EXAMPLE',
+  secretKey:: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+  nodePort:: error "nodePort must be provided",
 
-  persistent_volume: kube.PersistentVolume('minio') {
+  namespace:: {metadata+: {namespace: name}},
+
+  persistentVolume:: kube.PersistentVolume(name) {
     spec+: {
       capacity: { storage: '931Gi' },
       hostPath: { path: '/mnt/hdd/cloud-data' },
@@ -14,31 +19,31 @@ local minio(namespace, accessKey, secretKey, nodePort) = kutils.List({
       storageClassName: 'local-backup-hdd',
   }},
 
-  persistent_volume_claim: kube.PersistentVolumeClaim('minio') + $.namespace {
+  persistentVolumeClaim:: kube.PersistentVolumeClaim(name) + $.namespace {
     storageClass: 'local-backup-hdd',
     storage: '931G',
-    spec+: { volumeName: 'minio' },
+    spec+: { volumeName: name },
   },
 
-  secret: kube.Secret('minio') + $.namespace {
+  secret:: kube.Secret(name) + $.namespace {
     data_+:{
-      accesskey: accessKey,
-      secretkey: secretKey,
+      accesskey: $.accessKey,
+      secretkey: $.secretKey,
   }},
 
-  service_account: kube.ServiceAccount('minio') + $.namespace {},
+  serviceAccount:: kube.ServiceAccount(name) + $.namespace {},
 
-  deployment: kube.Deployment('minio') + $.namespace {
+  deployment:: kube.Deployment(name) + $.namespace {
     spec+: {
       template+: {
         spec+: {
-          serviceAccountName: $.service_account.metadata.name,
+          serviceAccountName: $.serviceAccount.metadata.name,
           securityContext: { runAsUser: 1000, runAsGroup: 1000, fsGroup: 1000 },
           volumes_+: {
-            export: kube.PersistentVolumeClaimVolume($.persistent_volume_claim),
+            export: kube.PersistentVolumeClaimVolume($.persistentVolumeClaim),
           },
           containers_+: {
-            'default': kube.Container('minio') {
+            'default': kube.Container(name) {
               image: 'minio/minio:RELEASE.2020-06-14T18-32-17Z',
               volumeMounts_+: { export: { mountPath: '/export' } },
               ports_+: { http: { containerPort: 9000 } },
@@ -76,7 +81,7 @@ local minio(namespace, accessKey, secretKey, nodePort) = kutils.List({
               },
   }}}}}},
 
-  service: kube.Service('minio') + $.namespace {
+  service:: kube.Service(name) + $.namespace {
     local service = self,
     target_pod: $.deployment.spec.template,
     spec+: {
@@ -86,13 +91,18 @@ local minio(namespace, accessKey, secretKey, nodePort) = kutils.List({
           port: service.port,
           name: service.target_pod.spec.containers[0].ports[0].name,
           targetPort: service.target_pod.spec.containers[0].ports[0].containerPort,
-          'nodePort': nodePort,
+          'nodePort': $.nodePort,
         },
       ],
   }},
 
-});
-
-{
-  Deployment:: minio,
+} + list {
+  items: [
+    $.persistentVolume,
+    $.persistentVolumeClaim,
+    $.secret,
+    $.serviceAccount,
+    $.deployment,
+    $.service,
+  ],
 }

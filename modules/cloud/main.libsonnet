@@ -1,37 +1,35 @@
 local kube = import "../lib/kube.libsonnet";
-local kutils = import "../utils/kube.libsonnet";
+local list = import "../utils/kube.libsonnet";
 local filestash = import '../filestash/main.libsonnet';
 local minio = import '../minio/main.libsonnet';
 
-local cloud(
-  namespace,
-  serveUrl,
-  filestashNodePort,
-  accessKey,
-  secretKey,
-  minioNodePort,
-) = kutils.List(
-  std.flattenArrays([
+local name = 'cloud';
+
+{
+  serveUrl:: error "serveUrl must be provided",
+  filestashNodePort:: error "filestashNodePort must be provided",
+  minioNodePort:: error "minioNodePort must be provided",
+  namespace:: {metadata+: {namespace: name}},
+} + list {
+  items: std.flattenArrays([
+
     [
       kube.StorageClass('local-backup-hdd') {
         provisioner: 'kubernetes.io/no-provisioner',
       } + { volumeBindingMode: 'WaitForFirstConsumer' },
-      kube.Namespace(namespace) {},
+      kube.Namespace($.namespace.metadata.namespace),
     ],
-    minio.Deployment(
-      namespace=namespace,
-      accessKey=accessKey,
-      secretKey=secretKey,
-      nodePort=minioNodePort,
-    ).items,
-    filestash.Deployment(
-      namespace=namespace,
-      serveUrl=serveUrl,
-      nodePort=filestashNodePort,
-    ).items,
-  ]),
-);
 
-{
-  Deployment:: cloud,
+    minio {
+      nodePort: $.minioNodePort,
+      namespace: $.namespace,
+    }.items,
+
+    filestash {
+      serveUrl: $.serveUrl,
+      nodePort: $.filestashNodePort,
+      namespace: $.namespace,
+    }.items,
+
+  ]),
 }
