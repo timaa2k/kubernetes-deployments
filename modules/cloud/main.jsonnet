@@ -1,7 +1,8 @@
 local kube = import "../lib/kube.libsonnet";
 local list = import "../utils/kube.libsonnet";
-local filestash = import '../filestash/main.libsonnet';
-local minio = import '../minio/main.libsonnet';
+
+local filestash = import '../filestash/main.jsonnet';
+local minio = import '../minio/main.jsonnet';
 
 local name = 'cloud';
 
