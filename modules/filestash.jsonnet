@@ -11,7 +11,6 @@ local name = 'filestash';
   namespaceRef:: {metadata+: {namespace: $.namespace.metadata.name}},
 
   deployment:: kube.Deployment(name) + $.namespaceRef {
-    local resource = self,
     spec+: {
       template+: {
         spec+: {
