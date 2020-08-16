@@ -4,12 +4,13 @@ local composition = import './composition.jsonnet';
 local name = 'filestash';
 
 {
-  serveUrl:: error "items must be provided",
-  nodePort:: 30000,
+  namespace:: kube.Namespace('default'),
+  serveUrl:: error 'items must be provided',
+  nodePort:: error 'nodePort must be provided',
 
-  namespace:: {metadata+: {namespace: name}},
+  namespaceRef:: {metadata+: {namespace: $.namespace.metadata.name}},
 
-  deployment:: kube.Deployment(name) + $.namespace {
+  deployment:: kube.Deployment(name) + $.namespaceRef {
     local resource = self,
     spec+: {
       template+: {
@@ -28,7 +29,7 @@ local name = 'filestash';
               ports_+: { http: { containerPort: 80 } },
   }}}}}},
 
-  service:: kube.Service(name) + $.namespace {
+  service:: kube.Service(name) + $.namespaceRef {
     local service = self,
     target_pod: $.deployment.spec.template,
     spec+: {

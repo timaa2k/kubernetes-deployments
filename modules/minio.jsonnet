@@ -4,36 +4,29 @@ local composition = import './composition.jsonnet';
 local name = 'minio';
 
 {
+  namespace:: kube.Namespace('default'),
+  persistentVolume:: error 'persistentVolume must be provided',
   accessKey:: 'AKIAIOSFODNN7EXAMPLE',
   secretKey:: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
-  nodePort:: error "nodePort must be provided",
+  nodePort:: error 'nodePort must be provided',
 
-  namespace:: {metadata+: {namespace: name}},
+  namespaceRef:: {metadata+: {namespace: $.namespace.metadata.name}},
 
-  persistentVolume:: kube.PersistentVolume(name) {
-    spec+: {
-      capacity: { storage: '931Gi' },
-      hostPath: { path: '/mnt/hdd/cloud-data' },
-      accessModes: [ 'ReadWriteOnce' ],
-      persistentVolumeReclaimPolicy: 'Retain',
-      storageClassName: 'local-backup-hdd',
-  }},
-
-  persistentVolumeClaim:: kube.PersistentVolumeClaim(name) + $.namespace {
-    storageClass: 'local-backup-hdd',
-    storage: '931G',
+  persistentVolumeClaim:: kube.PersistentVolumeClaim(name) + $.namespaceRef {
+    storageClass: $.persistentVolume.spec.storageClassName,
+    storage: $.persistentVolume.spec.capacity.storage,
     spec+: { volumeName: name },
   },
 
-  secret:: kube.Secret(name) + $.namespace {
+  secret:: kube.Secret(name) + $.namespaceRef {
     data_+:{
       accesskey: $.accessKey,
       secretkey: $.secretKey,
   }},
 
-  serviceAccount:: kube.ServiceAccount(name) + $.namespace {},
+  serviceAccount:: kube.ServiceAccount(name) + $.namespaceRef {},
 
-  deployment:: kube.Deployment(name) + $.namespace {
+  deployment:: kube.Deployment(name) + $.namespaceRef {
     spec+: {
       template+: {
         spec+: {
@@ -81,7 +74,7 @@ local name = 'minio';
               },
   }}}}}},
 
-  service:: kube.Service(name) + $.namespace {
+  service:: kube.Service(name) + $.namespaceRef {
     local service = self,
     target_pod: $.deployment.spec.template,
     spec+: {
