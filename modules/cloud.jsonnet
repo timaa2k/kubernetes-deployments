@@ -9,6 +9,7 @@ local name = 'cloud';
   serveUrl:: error 'serveUrl must be provided',
   filestashNodePort:: error 'filestashNodePort must be provided',
   minioNodePort:: error 'minioNodePort must be provided',
+
   namespace:: {metadata+: {namespace: name}},
 
 } + composition {items: std.flattenArrays([
