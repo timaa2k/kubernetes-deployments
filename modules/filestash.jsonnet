@@ -1,5 +1,5 @@
-local kube = import "../lib/kube.libsonnet";
-local list = import "../utils/kube.libsonnet";
+local kube = import '../lib/kube.libsonnet';
+local list = import './list.jsonnet';
 
 local name = 'filestash';
 
@@ -43,9 +43,7 @@ local name = 'filestash';
       ],
   }},
 
-} + list {
-  items: [
-    $.deployment,
-    $.service,
-  ],
-}
+} + list {items: [
+  $.deployment,
+  $.service,
+]}

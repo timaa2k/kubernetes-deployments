@@ -1,5 +1,5 @@
-local kube = import "../lib/kube.libsonnet";
-local list = import "../utils/kube.libsonnet";
+local kube = import '../lib/kube.libsonnet';
+local list = import './list.jsonnet';
 
 local name = 'minio';
 
@@ -96,13 +96,11 @@ local name = 'minio';
       ],
   }},
 
-} + list {
-  items: [
-    $.persistentVolume,
-    $.persistentVolumeClaim,
-    $.secret,
-    $.serviceAccount,
-    $.deployment,
-    $.service,
-  ],
-}
+} + list {items: [
+  $.persistentVolume,
+  $.persistentVolumeClaim,
+  $.secret,
+  $.serviceAccount,
+  $.deployment,
+  $.service,
+]}
