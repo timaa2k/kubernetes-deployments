@@ -1,5 +1,5 @@
 local kube = import '../lib/kube.libsonnet';
-local list = import './list.jsonnet';
+local composition = import './composition.jsonnet';
 local filestash = import './filestash.jsonnet';
 local minio = import './minio.jsonnet';
 
@@ -11,7 +11,7 @@ local name = 'cloud';
   minioNodePort:: error 'minioNodePort must be provided',
   namespace:: {metadata+: {namespace: name}},
 
-} + list {items: std.flattenArrays([
+} + composition {items: std.flattenArrays([
   [
     kube.StorageClass('local-backup-hdd') {
       provisioner: 'kubernetes.io/no-provisioner',

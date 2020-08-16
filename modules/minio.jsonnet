@@ -1,5 +1,5 @@
 local kube = import '../lib/kube.libsonnet';
-local list = import './list.jsonnet';
+local composition = import './composition.jsonnet';
 
 local name = 'minio';
 
@@ -96,7 +96,7 @@ local name = 'minio';
       ],
   }},
 
-} + list {items: [
+} + composition {items: [
   $.persistentVolume,
   $.persistentVolumeClaim,
   $.secret,
