@@ -78,13 +78,12 @@ local name = 'minio';
     local service = self,
     target_pod: $.deployment.spec.template,
     spec+: {
-      type: 'NodePort',
+      type: 'LoadBalancer',
       ports: [
         {
           port: service.port,
           name: service.target_pod.spec.containers[0].ports[0].name,
           targetPort: service.target_pod.spec.containers[0].ports[0].containerPort,
-          'nodePort': $.nodePort,
         },
       ],
   }},
