@@ -6,7 +6,6 @@ local name = 'filestash';
 {
   namespace:: kube.Namespace('default'),
   serveUrl:: error 'items must be provided',
-  nodePort:: error 'nodePort must be provided',
 
   namespaceRef:: {metadata+: {namespace: $.namespace.metadata.name}},
 
@@ -29,17 +28,9 @@ local name = 'filestash';
   }}}}}},
 
   service:: kube.Service(name) + $.namespaceRef {
-    local service = self,
     target_pod: $.deployment.spec.template,
     spec+: {
-      type: 'LoadBalancer',
-      ports: [
-        {
-          port: service.port,
-          name: service.target_pod.spec.containers[0].ports[0].name,
-          targetPort: service.target_pod.spec.containers[0].ports[0].containerPort,
-        },
-      ],
+      type: 'LoadBalancer'
   }},
 
 } + composition {items: [

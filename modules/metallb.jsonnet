@@ -11,7 +11,7 @@ local configWatcher = name + '-config-watcher';
 
   namespaceRef:: {metadata+: {namespace: $.namespace.metadata.name}},
 
-  clusterRoleController:: kube.ClusterRole(controller) + $.namespaceRef {
+  clusterRoleController:: kube.ClusterRole(controller) {
     rules: [{
       apiGroups: [''], resources: ['services'],
       verbs: ['get', 'list', 'watch', 'update'],
@@ -26,7 +26,7 @@ local configWatcher = name + '-config-watcher';
 
   serviceAccountController:: kube.ServiceAccount(controller) + $.namespaceRef,
 
-  clusterRolesBindingController:: kube.ClusterRoleBinding(controller) + $.namespaceRef {
+  clusterRolesBindingController:: kube.ClusterRoleBinding(controller) {
     subjects_: [ $.serviceAccountController ],
     roleRef_: $.clusterRoleController,
   },
@@ -67,9 +67,9 @@ local configWatcher = name + '-config-watcher';
       fsGroup: { rule: 'RunAsAny' },
       allowPrivilegeEscalation: false,
     }
-  } + $.namespaceRef,
+  },
 
-  clusterRoleSpeaker:: kube.ClusterRole(speaker) + $.namespaceRef {
+  clusterRoleSpeaker:: kube.ClusterRole(speaker) {
     rules: [{
       apiGroups: [''], resources: ['services', 'endpoints', 'nodes'],
       verbs: ['get', 'list', 'watch'],
@@ -85,7 +85,7 @@ local configWatcher = name + '-config-watcher';
 
   serviceAccountSpeaker:: kube.ServiceAccount(speaker) + $.namespaceRef,
 
-  clusterRolesBindingSpeaker:: kube.ClusterRoleBinding(speaker) + $.namespaceRef {
+  clusterRolesBindingSpeaker:: kube.ClusterRoleBinding(speaker) {
     subjects_: [ $.serviceAccountSpeaker ],
     roleRef_: $.clusterRoleSpeaker,
   },

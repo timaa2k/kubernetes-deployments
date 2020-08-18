@@ -8,7 +8,6 @@ local name = 'minio';
   persistentVolume:: error 'persistentVolume must be provided',
   accessKey:: 'AKIAIOSFODNN7EXAMPLE',
   secretKey:: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
-  nodePort:: error 'nodePort must be provided',
 
   namespaceRef:: {metadata+: {namespace: $.namespace.metadata.name}},
 
@@ -75,17 +74,9 @@ local name = 'minio';
   }}}}}},
 
   service:: kube.Service(name) + $.namespaceRef {
-    local service = self,
     target_pod: $.deployment.spec.template,
     spec+: {
       type: 'LoadBalancer',
-      ports: [
-        {
-          port: service.port,
-          name: service.target_pod.spec.containers[0].ports[0].name,
-          targetPort: service.target_pod.spec.containers[0].ports[0].containerPort,
-        },
-      ],
   }},
 
 } + composition {items: [
