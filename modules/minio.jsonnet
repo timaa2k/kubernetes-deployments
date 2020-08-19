@@ -14,7 +14,7 @@ local name = 'minio';
   persistentVolumeClaim:: kube.PersistentVolumeClaim(name) + $.namespaceRef {
     storageClass: $.persistentVolume.spec.storageClassName,
     storage: $.persistentVolume.spec.capacity.storage,
-    spec+: { volumeName: name },
+    spec+: { volumeName: $.persistentVolume.metadata.name },
   },
 
   secret:: kube.Secret(name) + $.namespaceRef {

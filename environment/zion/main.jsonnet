@@ -13,7 +13,16 @@ local kube = import '../../lib/kube.libsonnet';
     provisioner: 'kubernetes.io/no-provisioner',
   } + { volumeBindingMode: 'WaitForFirstConsumer' },
 
-  persistentVolume:: kube.PersistentVolume('minio') {
+  persistentVolumeConfig:: kube.PersistentVolume('config') {
+    spec+: {
+      capacity: { storage: '256Mi' },
+      hostPath: { path: '/mnt/hdd/config-data' },
+      accessModes: [ 'ReadWriteMany' ],
+      persistentVolumeReclaimPolicy: 'Retain',
+      storageClassName: $.storageClass.metadata.name,
+  }},
+
+  persistentVolumeData:: kube.PersistentVolume('minio') {
     spec+: {
       capacity: { storage: '931Gi' },
       hostPath: { path: '/mnt/hdd/cloud-data' },
@@ -28,7 +37,8 @@ local kube = import '../../lib/kube.libsonnet';
     $.namespaces.metallb,
     $.namespaces.cloud,
     $.storageClass,
-    $.persistentVolume,
+    $.persistentVolumeConfig,
+    $.persistentVolumeData,
   ],
 
   metallb {
@@ -37,7 +47,8 @@ local kube = import '../../lib/kube.libsonnet';
 
   cloud {
     namespace: $.namespaces.cloud,
-    persistentVolume: $.persistentVolume,
+    persistentVolumeConfig: $.persistentVolumeConfig,
+    persistentVolumeData: $.persistentVolumeData,
     serveUrl: '192.168.178.128:8334',
   }.items,
 

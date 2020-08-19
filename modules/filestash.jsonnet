@@ -5,17 +5,36 @@ local name = 'filestash';
 
 {
   namespace:: kube.Namespace('default'),
+  persistentVolume:: error 'persistentVolume must be provided',
   serveUrl:: error 'items must be provided',
 
   namespaceRef:: {metadata+: {namespace: $.namespace.metadata.name}},
+
+  persistentVolumeClaim:: kube.PersistentVolumeClaim(name) + $.namespaceRef {
+    storageClass: $.persistentVolume.spec.storageClassName,
+    storage: $.persistentVolume.spec.capacity.storage,
+    spec+: {
+      volumeName: $.persistentVolume.metadata.name,
+      accessModes: [ 'ReadWriteMany' ],
+    },
+  },
 
   deployment:: kube.Deployment(name) + $.namespaceRef {
     spec+: {
       template+: {
         spec+: {
+          volumes_+: {
+            config: kube.PersistentVolumeClaimVolume($.persistentVolumeClaim),
+          },
           containers_+: {
             'default': kube.Container(name) {
               image: 'docker.io/machines/filestash:fe802d8',
+              volumeMounts_+: {
+                config: {
+                  mountPath: '/app/data/state/config/',
+                  subPath: 'filestash/config',
+                },
+              },
               ports_+: { http: { containerPort: 8334 } },
               env_+: {
                 APPLICATION_URL: $.serveUrl,
@@ -34,6 +53,7 @@ local name = 'filestash';
   }},
 
 } + composition {items: [
+  $.persistentVolumeClaim,
   $.deployment,
   $.service,
 ]}

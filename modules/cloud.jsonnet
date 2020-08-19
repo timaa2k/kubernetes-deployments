@@ -5,17 +5,19 @@ local minio = import './minio.jsonnet';
 
 {
   namespace:: kube.Namespace('default'),
-  persistentVolume:: error 'persistentVolume must be provided',
+  persistentVolumeConfig:: error 'persistentVolumeConfig must be provided',
+  persistentVolumeData:: error 'persistentVolumeData must be provided',
   serveUrl:: error 'serveUrl must be provided',
 
 } + composition {items: std.flattenArrays([
 
   minio {
-    persistentVolume: $.persistentVolume,
+    persistentVolume: $.persistentVolumeData,
     namespace: $.namespace,
   }.items,
 
   filestash {
+    persistentVolume: $.persistentVolumeConfig,
     serveUrl: $.serveUrl,
     namespace: $.namespace,
   }.items,
