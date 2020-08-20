@@ -13,10 +13,7 @@ local name = 'filestash';
   persistentVolumeClaim:: kube.PersistentVolumeClaim(name) + $.namespaceRef {
     storageClass: $.persistentVolume.spec.storageClassName,
     storage: $.persistentVolume.spec.capacity.storage,
-    spec+: {
-      volumeName: $.persistentVolume.metadata.name,
-      accessModes: [ 'ReadWriteMany' ],
-    },
+    spec+: { volumeName: $.persistentVolume.metadata.name },
   },
 
   deployment:: kube.Deployment(name) + $.namespaceRef {
@@ -32,7 +29,7 @@ local name = 'filestash';
               volumeMounts_+: {
                 config: {
                   mountPath: '/app/data/state/config/',
-                  subPath: 'filestash/config',
+                  subPath: 'config',
                 },
               },
               ports_+: { http: { containerPort: 8334 } },

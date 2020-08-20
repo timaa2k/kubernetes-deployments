@@ -26,7 +26,7 @@ local configWatcher = name + '-config-watcher';
 
   serviceAccountController:: kube.ServiceAccount(controller) + $.namespaceRef,
 
-  clusterRolesBindingController:: kube.ClusterRoleBinding(controller) {
+  clusterRoleBindingController:: kube.ClusterRoleBinding(controller) {
     subjects_: [ $.serviceAccountController ],
     roleRef_: $.clusterRoleController,
   },
@@ -85,7 +85,7 @@ local configWatcher = name + '-config-watcher';
 
   serviceAccountSpeaker:: kube.ServiceAccount(speaker) + $.namespaceRef,
 
-  clusterRolesBindingSpeaker:: kube.ClusterRoleBinding(speaker) {
+  clusterRoleBindingSpeaker:: kube.ClusterRoleBinding(speaker) {
     subjects_: [ $.serviceAccountSpeaker ],
     roleRef_: $.clusterRoleSpeaker,
   },
@@ -138,12 +138,12 @@ local configWatcher = name + '-config-watcher';
 } + composition {items: [
   $.clusterRoleController,
   $.serviceAccountController,
-  $.clusterRolesBindingController,
+  $.clusterRoleBindingController,
   $.deploymentController,
   $.podSecurityPolicySpeaker,
   $.clusterRoleSpeaker,
   $.serviceAccountSpeaker,
-  $.clusterRolesBindingSpeaker,
+  $.clusterRoleBindingSpeaker,
   $.daemonSetSpeaker,
   $.roleConfigWatcher,
   $.roleBindingConfigWatcher,

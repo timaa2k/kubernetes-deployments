@@ -1,11 +1,13 @@
+local kube = import '../../lib/kube.libsonnet';
 local cloud = import '../../modules/cloud.jsonnet';
 local composition = import '../../modules/composition.jsonnet';
 local metallb = import '../../modules/metallb.jsonnet';
-local kube = import '../../lib/kube.libsonnet';
+local traefik = import '../../modules/traefik.jsonnet';
 
 {
   namespaces:: {
     metallb: kube.Namespace('metallb'),
+    traefik: kube.Namespace('traefik'),
     cloud: kube.Namespace('cloud'),
   },
 
@@ -13,16 +15,25 @@ local kube = import '../../lib/kube.libsonnet';
     provisioner: 'kubernetes.io/no-provisioner',
   } + { volumeBindingMode: 'WaitForFirstConsumer' },
 
-  persistentVolumeConfig:: kube.PersistentVolume('config') {
+  persistentVolumeTraefik: kube.PersistentVolume('traefik') {
     spec+: {
-      capacity: { storage: '256Mi' },
-      hostPath: { path: '/mnt/hdd/config-data' },
-      accessModes: [ 'ReadWriteMany' ],
+      capacity: { storage: '128Mi' },
+      hostPath: { path: '/mnt/hdd/config-data/traefik' },
+      accessModes: [ 'ReadWriteOnce' ],
       persistentVolumeReclaimPolicy: 'Retain',
       storageClassName: $.storageClass.metadata.name,
   }},
 
-  persistentVolumeData:: kube.PersistentVolume('minio') {
+  persistentVolumeFilestash: kube.PersistentVolume('filestash') {
+    spec+: {
+      capacity: { storage: '128Mi' },
+      hostPath: { path: '/mnt/hdd/config-data/filestash' },
+      accessModes: [ 'ReadWriteOnce' ],
+      persistentVolumeReclaimPolicy: 'Retain',
+      storageClassName: $.storageClass.metadata.name,
+  }},
+
+  persistentVolumeMinio:: kube.PersistentVolume('minio') {
     spec+: {
       capacity: { storage: '931Gi' },
       hostPath: { path: '/mnt/hdd/cloud-data' },
@@ -35,20 +46,27 @@ local kube = import '../../lib/kube.libsonnet';
 
   [
     $.namespaces.metallb,
+    $.namespaces.traefik,
     $.namespaces.cloud,
     $.storageClass,
-    $.persistentVolumeConfig,
-    $.persistentVolumeData,
+    $.persistentVolumeTraefik,
+    $.persistentVolumeFilestash,
+    $.persistentVolumeMinio,
   ],
 
   metallb {
-    namespace: $.namespaces.metallb
+    namespace: $.namespaces.metallb,
+  }.items,
+
+  traefik {
+    namespace: $.namespaces.traefik,
+    persistentVolume: $.persistentVolumeTraefik,
   }.items,
 
   cloud {
     namespace: $.namespaces.cloud,
-    persistentVolumeConfig: $.persistentVolumeConfig,
-    persistentVolumeData: $.persistentVolumeData,
+    persistentVolumeConfig: $.persistentVolumeFilestash,
+    persistentVolumeData: $.persistentVolumeMinio,
     serveUrl: '192.168.178.128:8334',
   }.items,
 
