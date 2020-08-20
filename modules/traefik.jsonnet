@@ -9,6 +9,48 @@ local name = 'traefik';
 
   namespaceRef:: {metadata+: {namespace: $.namespace.metadata.name}},
 
+  ingressRoutes:: kube.CustomResourceDefinition(
+    'traefik.containo.us',
+    'v1alpha1',
+    'IngressRoute',
+  ),
+
+  middlewares:: kube.CustomResourceDefinition(
+    'traefik.containo.us',
+    'v1alpha1',
+    'Middleware',
+  ),
+
+  ingressRouteTCPs:: kube.CustomResourceDefinition(
+    'traefik.containo.us',
+    'v1alpha1',
+    'IngressRouteTCP',
+  ),
+
+  ingressRouteUDPs:: kube.CustomResourceDefinition(
+    'traefik.containo.us',
+    'v1alpha1',
+    'IngressRouteUDP',
+  ),
+
+  tlsOptions:: kube.CustomResourceDefinition(
+    'traefik.containo.us',
+    'v1alpha1',
+    'TLSOption',
+  ),
+
+  tlsStores:: kube.CustomResourceDefinition(
+    'traefik.containo.us',
+    'v1alpha1',
+    'TLSStore',
+  ),
+
+  traefikServices:: kube.CustomResourceDefinition(
+    'traefik.containo.us',
+    'v1alpha1',
+    'TraefikService',
+  ),
+
   persistentVolumeClaim:: kube.PersistentVolumeClaim(name) + $.namespaceRef {
     storageClass: $.persistentVolume.spec.storageClassName,
     storage: $.persistentVolume.spec.capacity.storage,
@@ -69,12 +111,16 @@ local name = 'traefik';
               },
               ports_+: {
                 traefik:   { containerPort: 9000 },
-                web:       { containerPort: 8000 },
+                web:       { containerPort: 8080 },
                 websecure: { containerPort: 8443 },
               },
               args: [
+                '--api',
+                '--api.insecure',
+                '--api.dashboard=true',
+                '--accesslog',
                 '--entryPoints.traefik.address=:9000/tcp',
-                '--entryPoints.web.address=:8000/tcp',
+                '--entryPoints.web.address=:8080/tcp',
                 '--entryPoints.websecure.address=:8443/tcp',
                 '--api.dashboard=true',
                 '--ping=true',
@@ -103,12 +149,37 @@ local name = 'traefik';
   }}}}}}},
 
   service:: kube.Service(name) + $.namespaceRef {
+    local service = self,
     target_pod: $.deployment.spec.template,
     spec+: {
       type: 'LoadBalancer',
+      ports: [
+        {
+          port: 9000,
+          name: service.target_pod.spec.containers[0].ports[0].name,
+          targetPort: service.target_pod.spec.containers[0].ports[0].containerPort,
+        },
+        {
+          port: 80,
+          name: service.target_pod.spec.containers[0].ports[1].name,
+          targetPort: service.target_pod.spec.containers[0].ports[1].containerPort,
+        },
+        {
+          port: 443,
+          name: service.target_pod.spec.containers[0].ports[2].name,
+          targetPort: service.target_pod.spec.containers[0].ports[2].containerPort,
+        },
+      ],
   }},
 
 } + composition {items: [
+  $.ingressRoutes,
+  $.middlewares,
+  $.ingressRouteTCPs,
+  $.ingressRouteUDPs,
+  $.tlsOptions,
+  $.tlsStores,
+  $.traefikServices,
   $.persistentVolumeClaim,
   $.clusterRole,
   $.serviceAccount,

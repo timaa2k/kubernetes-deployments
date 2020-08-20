@@ -67,7 +67,7 @@ local traefik = import '../../modules/traefik.jsonnet';
     namespace: $.namespaces.cloud,
     persistentVolumeConfig: $.persistentVolumeFilestash,
     persistentVolumeData: $.persistentVolumeMinio,
-    serveUrl: '192.168.178.128:8334',
+    serveUrl: '192.168.178.130:80',
   }.items,
 
 ])}
