@@ -1,13 +1,12 @@
-local kube = import '../lib/kube.libsonnet';
+local kube = (import '../lib/kube.libsonnet') { _assert:: false };
 local composition = import './composition.jsonnet';
 
 local name = 'minio';
 
 {
   namespace:: kube.Namespace('default'),
+  encryptedConfig:: error 'encryptedConfig must be provided',
   persistentVolume:: error 'persistentVolume must be provided',
-  accessKey:: 'AKIAIOSFODNN7EXAMPLE',
-  secretKey:: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
 
   namespaceRef:: {metadata+: {namespace: $.namespace.metadata.name}},
 
@@ -17,11 +16,12 @@ local name = 'minio';
     spec+: { volumeName: $.persistentVolume.metadata.name },
   },
 
-  secret:: kube.Secret(name) + $.namespaceRef {
-    data_+:{
-      accesskey: $.accessKey,
-      secretkey: $.secretKey,
-  }},
+  secret:: kube.SealedSecret(name) + $.namespaceRef {
+    spec+: {
+    encryptedData: {
+      accesskey: $.encryptedConfig['accesskey'],
+      secretkey: $.encryptedConfig['secretkey'],
+  }}},
 
   serviceAccount:: kube.ServiceAccount(name) + $.namespaceRef {},
 

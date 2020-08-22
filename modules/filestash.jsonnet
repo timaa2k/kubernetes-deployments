@@ -5,23 +5,22 @@ local name = 'filestash';
 
 {
   namespace:: kube.Namespace('default'),
-  persistentVolume:: error 'persistentVolume must be provided',
-  serveUrl:: error 'items must be provided',
+  encryptedConfig:: error 'encryptedConfig must be provided',
 
   namespaceRef:: {metadata+: {namespace: $.namespace.metadata.name}},
 
-  persistentVolumeClaim:: kube.PersistentVolumeClaim(name) + $.namespaceRef {
-    storageClass: $.persistentVolume.spec.storageClassName,
-    storage: $.persistentVolume.spec.capacity.storage,
-    spec+: { volumeName: $.persistentVolume.metadata.name },
-  },
+  secret:: kube.SealedSecret(name) + $.namespaceRef {
+    spec+: {
+      encryptedData: {
+        'config.json': $.encryptedConfig['config.json'],
+  }}},
 
   deployment:: kube.Deployment(name) + $.namespaceRef {
     spec+: {
       template+: {
         spec+: {
           volumes_+: {
-            config: kube.PersistentVolumeClaimVolume($.persistentVolumeClaim),
+            config: {secret: {secretName: $.secret.metadata.name} },
           },
           containers_+: {
             'default': kube.Container(name) {
@@ -29,14 +28,10 @@ local name = 'filestash';
               volumeMounts_+: {
                 config: {
                   mountPath: '/app/data/state/config/',
-                  subPath: 'config',
+                  readOnly: true,
                 },
               },
               ports_+: { http: { containerPort: 8334 } },
-              env_+: {
-                APPLICATION_URL: $.serveUrl,
-                ONLYOFFICE_URL: 'http://onlyoffice',
-              },
             },
             'onlyoffice': kube.Container('onlyoffice') {
               image: 'docker.io/onlyoffice/documentserver:5.6.0.17',
@@ -50,7 +45,7 @@ local name = 'filestash';
   }},
 
 } + composition {items: [
-  $.persistentVolumeClaim,
+  $.secret,
   $.deployment,
   $.service,
 ]}
