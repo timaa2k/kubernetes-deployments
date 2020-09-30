@@ -2,6 +2,7 @@ local kube = import '../../lib/kube.libsonnet';
 local cloud = import '../../modules/cloud.jsonnet';
 local composition = import '../../modules/composition.jsonnet';
 local metallb = import '../../modules/metallb.jsonnet';
+local influxdb = import '../../modules/influxdb.jsonnet';
 local sealedSecrets = import '../../modules/sealed-secrets.jsonnet';
 local traefik = import '../../modules/traefik.jsonnet';
 
@@ -11,6 +12,7 @@ local traefik = import '../../modules/traefik.jsonnet';
     metallb: kube.Namespace('metallb'),
     traefik: kube.Namespace('traefik'),
     cloud: kube.Namespace('cloud'),
+    influx: kube.Namespace('influx'),
   },
 
   storageClass:: kube.StorageClass('local-backup-hdd') {
@@ -35,6 +37,15 @@ local traefik = import '../../modules/traefik.jsonnet';
       storageClassName: $.storageClass.metadata.name,
   }},
 
+  persistentVolumeInfluxDB:: kube.PersistentVolume('influxdb-data') {
+    spec+: {
+      capacity: { storage: '8Gi' },
+      hostPath: { path: '/mnt/hdd/influx-data' },
+      accessModes: [ 'ReadWriteOnce' ],
+      persistentVolumeReclaimPolicy: 'Retain',
+      storageClassName: $.storageClass.metadata.name,
+  }},
+
 } + composition {items: std.flattenArrays([
 
   [
@@ -42,9 +53,11 @@ local traefik = import '../../modules/traefik.jsonnet';
     $.namespaces.metallb,
     $.namespaces.traefik,
     $.namespaces.cloud,
+    $.namespaces.influx,
     $.storageClass,
     $.persistentVolumeTraefik,
     $.persistentVolumeMinio,
+    $.persistentVolumeInfluxDB,
   ],
 
   sealedSecrets {
@@ -63,6 +76,11 @@ local traefik = import '../../modules/traefik.jsonnet';
   cloud {
     namespace: $.namespaces.cloud,
     persistentVolumeData: $.persistentVolumeMinio,
+  }.items,
+
+  influxdb {
+    namespace: $.namespaces.influx,
+    persistentVolume: $.persistentVolumeInfluxDB,
   }.items,
 
 ])}
