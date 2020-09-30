@@ -1,8 +1,9 @@
 local kube = import '../../lib/kube.libsonnet';
 local cloud = import '../../modules/cloud.jsonnet';
 local composition = import '../../modules/composition.jsonnet';
-local metallb = import '../../modules/metallb.jsonnet';
+local grafana = import '../../modules/grafana.jsonnet';
 local influxdb = import '../../modules/influxdb.jsonnet';
+local metallb = import '../../modules/metallb.jsonnet';
 local sealedSecrets = import '../../modules/sealed-secrets.jsonnet';
 local traefik = import '../../modules/traefik.jsonnet';
 
@@ -13,6 +14,7 @@ local traefik = import '../../modules/traefik.jsonnet';
     traefik: kube.Namespace('traefik'),
     cloud: kube.Namespace('cloud'),
     influx: kube.Namespace('influx'),
+    grafana: kube.Namespace('grafana'),
   },
 
   storageClass:: kube.StorageClass('local-backup-hdd') {
@@ -54,6 +56,7 @@ local traefik = import '../../modules/traefik.jsonnet';
     $.namespaces.traefik,
     $.namespaces.cloud,
     $.namespaces.influx,
+    $.namespaces.grafana,
     $.storageClass,
     $.persistentVolumeTraefik,
     $.persistentVolumeMinio,
@@ -81,6 +84,10 @@ local traefik = import '../../modules/traefik.jsonnet';
   influxdb {
     namespace: $.namespaces.influx,
     persistentVolume: $.persistentVolumeInfluxDB,
+  }.items,
+
+  grafana {
+    namespace: $.namespaces.grafana,
   }.items,
 
 ])}
