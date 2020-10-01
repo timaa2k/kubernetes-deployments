@@ -104,7 +104,6 @@ local name = 'grafana';
                 storage: { mountPath: '/var/lib/grafana' },
               },
               ports_+: {
-                service: { containerPort: 80 },
                 grafana: { containerPort: 3000 },
               },
               env_+: {
@@ -123,6 +122,7 @@ local name = 'grafana';
 
   service:: kube.Service(name) + $.namespaceRef {
     target_pod: $.deployment.spec.template,
+    port: 80,
     spec+: {
       type: 'LoadBalancer',
   }},
