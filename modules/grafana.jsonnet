@@ -91,6 +91,19 @@ local name = 'grafana';
               plugins: '"/var/lib/grafana/plugins"',
               provisioning: '"/etc/grafana/provisioning"',
             },
+            users: {
+              default_theme: 'light',
+            },
+            auth: {
+              disable_login_form: 'true',
+            },
+            'auth.basic': {
+              enabled: 'false',
+            },
+            'auth.anonymous': {
+              enabled: 'true',
+              org_role: 'Admin',
+            },
           },
         }
       ),
