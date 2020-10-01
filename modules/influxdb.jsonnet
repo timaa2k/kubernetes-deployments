@@ -11,7 +11,21 @@ local name = 'influxdb';
 
   configMap:: kube.ConfigMap(name) + $.namespaceRef {
     data: {
-      'influxdb.conf': 'reporting-disabled = false\nbind-address = \":8088\"\n\n[meta]\n  dir = \"/var/lib/influxdb/meta\"\n\n[data]\n  dir = \"/var/lib/influxdb/data\"\n  wal-dir = \"/var/lib/influxdb/wal\"\n\n[coordinator]\n\n[retention]\n\n[shard-precreation]\n\n[monitor]\n\n[subscriber]\n\n[http]\n\n# TODO: allow multiple graphite listeners\n\n[[graphite]]\n\n# TODO: allow multiple collectd listeners with templates\n\n[[collectd]]\n\n# TODO: allow multiple opentsdb listeners with templates\n\n[[opentsdb]]\n\n# TODO: allow multiple udp listeners with templates\n\n[[udp]]\n\n[continuous_queries]\n\n[logging]\n',
+      'influxdb.conf': std.manifestIni(
+        {
+          main: {
+            'reporting-disabled': 'false',
+            'bind-address': '":8088"',
+          },
+          sections: {
+            meta: { dir: '"/var/lib/influxdb/meta"' },
+            data: {
+              dir: '"/var/lib/influxdb/data"',
+              'wal-dir': '"/var/lib/influxdb/wal"',
+            },
+          },
+        },
+      ),
   }},
 
   serviceAccount:: kube.ServiceAccount(name) + $.namespaceRef {},

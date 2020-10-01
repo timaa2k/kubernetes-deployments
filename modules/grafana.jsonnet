@@ -73,13 +73,52 @@ local name = 'grafana';
 
   configMap:: kube.ConfigMap(name) + $.namespaceRef {
     data+: {
-      'grafana.ini': '[analytics]\ncheck_for_updates = true\n[grafana_net]\nurl = https://grafana.net\n[log]\nmode = console\n[paths]\ndata = /var/lib/grafana/data\nlogs = /var/log/grafana\nplugins = /var/lib/grafana/plugins\nprovisioning = /etc/grafana/provisioning\n'
+      'grafana.ini': std.manifestIni(
+        {
+          sections: {
+            analytics: {
+              check_for_updates: 'false',
+            },
+            grafana_net: {
+              url: '"https://grafana.net"',
+            },
+            log: {
+              mode: 'console',
+            },
+            paths: {
+              data: '"/var/lib/grafana/data"',
+              logs: '"/var/log/grafana"',
+              plugins: '"/var/lib/grafana/plugins"',
+              provisioning: '"/etc/grafana/provisioning"',
+            },
+          },
+        }
+      ),
+      'datasources.yaml': std.manifestYamlDoc(
+        {
+          apiVersion: 1,
+          datasources: [
+            {
+              name: 'InfluxDB_v1',
+              type: 'influxdb',
+              access: 'proxy',
+              database: 'NOAA_water_database',
+              user: '',
+              password: '',
+              url: 'http://influxdb.influx:8086',
+              jsonData: {
+                httpMode: 'GET',
+              },
+            },
+          ],
+        },
+      ),
   }},
 
   secret:: kube.Secret(name) + $.namespaceRef {
     data_+: {
       'admin-user': 'admin',
-      'admin-password': 'SAi54CDXrZvY5RGU8gJ2o8YOFQOUJ2LmlNZhN95G',
+      'admin-password': 'admin',
       'ldap-toml': '',
   }},
 
@@ -91,6 +130,7 @@ local name = 'grafana';
           securityContext: { runAsUser: 472, runAsGroup: 472, fsGroup: 472 },
           volumes_+: {
             config: kube.ConfigMapVolume($.configMap),
+            datasources: kube.ConfigMapVolume($.configMap),
             storage: kube.EmptyDirVolume(),
           },
           containers_+: {
@@ -100,6 +140,10 @@ local name = 'grafana';
                 config: {
                   mountPath: '/etc/grafana/grafana.ini',
                   subPath: 'grafana.ini',
+                },
+                datasources: {
+                  mountPath: '/etc/grafana/provisioning/datasources/datasources.yaml',
+                  subPath: 'datasources.yaml',
                 },
                 storage: { mountPath: '/var/lib/grafana' },
               },
