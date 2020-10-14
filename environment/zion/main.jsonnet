@@ -2,7 +2,7 @@ local kube = import '../../lib/kube.libsonnet';
 local cloud = import '../../modules/cloud.jsonnet';
 local composition = import '../../modules/composition.jsonnet';
 local grafana = import '../../modules/grafana.jsonnet';
-local influxdb = import '../../modules/influxdb.jsonnet';
+local elasticsearch = import '../../modules/elasticsearch.jsonnet';
 local metallb = import '../../modules/metallb.jsonnet';
 local sealedSecrets = import '../../modules/sealed-secrets.jsonnet';
 local traefik = import '../../modules/traefik.jsonnet';
@@ -13,8 +13,8 @@ local traefik = import '../../modules/traefik.jsonnet';
     metallb: kube.Namespace('metallb'),
     traefik: kube.Namespace('traefik'),
     cloud: kube.Namespace('cloud'),
-    influx: kube.Namespace('influx'),
     grafana: kube.Namespace('grafana'),
+    elastic: kube.Namespace('elastic'),
   },
 
   storageClass:: kube.StorageClass('local-backup-hdd') {
@@ -39,10 +39,10 @@ local traefik = import '../../modules/traefik.jsonnet';
       storageClassName: $.storageClass.metadata.name,
   }},
 
-  persistentVolumeInfluxDB:: kube.PersistentVolume('influxdb-data') {
+  persistentVolumeElasticSearch:: kube.PersistentVolume('elasticsearch-data') {
     spec+: {
-      capacity: { storage: '8Gi' },
-      hostPath: { path: '/mnt/hdd/influx-data' },
+      capacity: { storage: '30Gi' },
+      hostPath: { path: '/mnt/hdd/elasticsearch-data' },
       accessModes: [ 'ReadWriteOnce' ],
       persistentVolumeReclaimPolicy: 'Retain',
       storageClassName: $.storageClass.metadata.name,
@@ -55,12 +55,12 @@ local traefik = import '../../modules/traefik.jsonnet';
     $.namespaces.metallb,
     $.namespaces.traefik,
     $.namespaces.cloud,
-    $.namespaces.influx,
     $.namespaces.grafana,
+    $.namespaces.elastic,
     $.storageClass,
     $.persistentVolumeTraefik,
     $.persistentVolumeMinio,
-    $.persistentVolumeInfluxDB,
+    $.persistentVolumeElasticSearch,
   ],
 
   sealedSecrets {
@@ -81,9 +81,9 @@ local traefik = import '../../modules/traefik.jsonnet';
     persistentVolumeData: $.persistentVolumeMinio,
   }.items,
 
-  influxdb {
-    namespace: $.namespaces.influx,
-    persistentVolume: $.persistentVolumeInfluxDB,
+  elasticsearch {
+    namespace: $.namespaces.elastic,
+    persistentVolume: $.persistentVolumeElasticSearch,
   }.items,
 
   grafana {
